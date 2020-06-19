@@ -5,6 +5,6 @@
 tests/ export-ignore
 *.sh eol=lf
 
-tests/*.expect linguist-language=PHP
-tests/*.phpf  linguist-language=PHP
+tests/**.expect linguist-language=PHP
+tests/**.phpf  linguist-language=PHP
 *.php74  linguist-language=PHP
