@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 
 use Nette\PhpGenerator\Method;
+use Nette\PhpGenerator\Type;
 use Tester\Assert;
 
 
@@ -22,26 +23,26 @@ interface Foo
 }
 
 $method = Method::from(Foo::class . '::scalars');
-Assert::same('string', $method->getParameters()['a']->getTypeHint());
+Assert::same('string', $method->getParameters()['a']->getType());
 
 $method = Method::from(Foo::class . '::scalars');
-Assert::same('bool', $method->getParameters()['b']->getTypeHint());
+Assert::same('bool', $method->getParameters()['b']->getType());
 
 $method = Method::from(Foo::class . '::scalars');
-Assert::same('int', $method->getParameters()['c']->getTypeHint());
+Assert::same('int', $method->getParameters()['c']->getType());
 
 $method = Method::from(Foo::class . '::scalars');
-Assert::same('float', $method->getParameters()['d']->getTypeHint());
+Assert::same('float', $method->getParameters()['d']->getType());
 
 
 // generating methods with scalar type hints
 
 $method = (new Method('create'))
 	->setBody('return null;');
-$method->addParameter('a')->setTypeHint('string');
-$method->addParameter('b')->setTypeHint('bool');
+$method->addParameter('a')->setType(Type::STRING);
+$method->addParameter('b')->setType(Type::BOOL);
 
-Assert::match(
+same(
 'function create(string $a, bool $b)
 {
 	return null;

@@ -4,7 +4,7 @@
  *
  * @property-read Nette\Forms\Form $form
  */
-abstract final class Example extends ParentClass implements IExample, IOne
+abstract class Example extends ParentClass implements IExample, IOne
 {
 	use ObjectTrait;
 	use AnotherTrait {
@@ -13,14 +13,15 @@ abstract final class Example extends ParentClass implements IExample, IOne
 
 	const ROLE = 'admin';
 	const ACTIVE = false;
+
 	/** Commented */
 	private const FORCE_ARRAY = Nette\Utils\Json::FORCE_ARRAY;
 
 	/** @var resource  orignal file handle */
 	private $handle;
-
 	public $order = RecursiveIteratorIterator::SELF_FIRST;
-
+	public array $typed1;
+	public ?array $typed2 = null;
 	public static $sections = ['first' => true];
 
 

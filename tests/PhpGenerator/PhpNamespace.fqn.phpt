@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpNamespace;
-use Tester\Assert;
+use Nette\PhpGenerator\Printer;
 
 require __DIR__ . '/../bootstrap.php';
 
@@ -29,12 +29,15 @@ $method = $class->addMethod('two')
 	->setReturnType('\Two');
 
 $method->addParameter('one')
-		->setTypeHint('One');
+		->setType('One');
 
 $method->addParameter('two')
-		->setTypeHint('\Two');
+		->setType('\Two');
 
-Assert::matchFile(__DIR__ . '/PhpNamespace.fqn1.expect', (string) $class);
+sameFile(__DIR__ . '/expected/PhpNamespace.fqn1.expect', (string) $class);
+
+sameFile(__DIR__ . '/expected/PhpNamespace.fqn1.expect', (new Printer)->printClass($class));
+
 
 
 // global namespace
@@ -53,9 +56,14 @@ $method = $class->addMethod('two')
 	->setReturnType('\Two');
 
 $method->addParameter('one')
-		->setTypeHint('One');
+		->setType('One');
 
 $method->addParameter('two')
-		->setTypeHint('\Two');
+		->setType('\Two');
 
-Assert::matchFile(__DIR__ . '/PhpNamespace.fqn2.expect', (string) $class);
+sameFile(__DIR__ . '/expected/PhpNamespace.fqn2.expect', (string) $class);
+
+sameFile(__DIR__ . '/expected/PhpNamespace.fqn2.expect', (new Printer)->printClass($class, new PhpNamespace('')));
+
+// no resolve
+sameFile(__DIR__ . '/expected/PhpNamespace.fqn1.expect', (new Printer)->printClass($class));

@@ -1,8 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
 use Nette\PhpGenerator\GlobalFunction;
-use Tester\Assert;
 
 
 require __DIR__ . '/../bootstrap.php';
@@ -11,14 +11,32 @@ require __DIR__ . '/../bootstrap.php';
 /** global */
 function func(stdClass $a, $b = null)
 {
+	echo sprintf('hello, %s', 'world');
+	return 1;
 }
 
 
 $function = GlobalFunction::from('func');
-Assert::match(
+same(
 '/**
  * global
  */
 function func(stdClass $a, $b = null)
 {
-}', (string) $function);
+}
+', (string) $function);
+
+
+$function = GlobalFunction::withBodyFrom('func');
+same(<<<'XX'
+/**
+ * global
+ */
+function func(stdClass $a, $b = null)
+{
+	echo \sprintf('hello, %s', 'world');
+	return 1;
+}
+
+XX
+, (string) $function);

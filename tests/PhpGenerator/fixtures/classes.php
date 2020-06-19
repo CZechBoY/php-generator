@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Abc;
@@ -91,8 +92,9 @@ class Class5
 }
 
 
-class Class6
+class Class6 extends Class4
 {
+	/** const doc */
 	private const THE_PRIVATE_CONSTANT = 9;
 	public const THE_PUBLIC_CONSTANT = 9;
 }

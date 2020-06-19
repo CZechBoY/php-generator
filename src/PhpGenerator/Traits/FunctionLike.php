@@ -10,9 +10,8 @@ declare(strict_types=1);
 namespace Nette\PhpGenerator\Traits;
 
 use Nette;
-use Nette\PhpGenerator\Helpers;
+use Nette\PhpGenerator\Dumper;
 use Nette\PhpGenerator\Parameter;
-use Nette\PhpGenerator\PhpNamespace;
 
 
 /**
@@ -23,7 +22,7 @@ trait FunctionLike
 	/** @var string */
 	private $body = '';
 
-	/** @var array of name => Parameter */
+	/** @var Parameter[] */
 	private $parameters = [];
 
 	/** @var bool */
@@ -38,16 +37,11 @@ trait FunctionLike
 	/** @var bool */
 	private $returnNullable = false;
 
-	/** @var PhpNamespace|null */
-	private $namespace;
 
-
-	/**
-	 * @return static
-	 */
+	/** @return static */
 	public function setBody(string $code, array $args = null): self
 	{
-		$this->body = $args === null ? $code : Helpers::formatArgs($code, $args);
+		$this->body = $args === null ? $code : (new Dumper)->format($code, ...$args);
 		return $this;
 	}
 
@@ -58,18 +52,16 @@ trait FunctionLike
 	}
 
 
-	/**
-	 * @return static
-	 */
+	/** @return static */
 	public function addBody(string $code, array $args = null): self
 	{
-		$this->body .= ($args === null ? $code : Helpers::formatArgs($code, $args)) . "\n";
+		$this->body .= ($args === null ? $code : (new Dumper)->format($code, ...$args)) . "\n";
 		return $this;
 	}
 
 
 	/**
-	 * @param  Parameter[]
+	 * @param  Parameter[]  $val
 	 * @return static
 	 */
 	public function setParameters(array $val): self
@@ -85,9 +77,7 @@ trait FunctionLike
 	}
 
 
-	/**
-	 * @return Parameter[]
-	 */
+	/** @return Parameter[] */
 	public function getParameters(): array
 	{
 		return $this->parameters;
@@ -95,7 +85,7 @@ trait FunctionLike
 
 
 	/**
-	 * @param  string  without $
+	 * @param  string  $name without $
 	 */
 	public function addParameter(string $name, $defaultValue = null): Parameter
 	{
@@ -108,8 +98,17 @@ trait FunctionLike
 
 
 	/**
+	 * @param  string  $name without $
 	 * @return static
 	 */
+	public function removeParameter(string $name): self
+	{
+		unset($this->parameters[$name]);
+		return $this;
+	}
+
+
+	/** @return static */
 	public function setVariadic(bool $state = true): self
 	{
 		$this->variadic = $state;
@@ -123,9 +122,7 @@ trait FunctionLike
 	}
 
 
-	/**
-	 * @return static
-	 */
+	/** @return static */
 	public function setReturnType(?string $val): self
 	{
 		$this->returnType = $val;
@@ -139,9 +136,7 @@ trait FunctionLike
 	}
 
 
-	/**
-	 * @return static
-	 */
+	/** @return static */
 	public function setReturnReference(bool $state = true): self
 	{
 		$this->returnReference = $state;
@@ -155,9 +150,7 @@ trait FunctionLike
 	}
 
 
-	/**
-	 * @return static
-	 */
+	/** @return static */
 	public function setReturnNullable(bool $state = true): self
 	{
 		$this->returnNullable = $state;
@@ -165,42 +158,23 @@ trait FunctionLike
 	}
 
 
+	public function isReturnNullable(): bool
+	{
+		return $this->returnNullable;
+	}
+
+
+	/** @deprecated  use isReturnNullable() */
 	public function getReturnNullable(): bool
 	{
 		return $this->returnNullable;
 	}
 
 
-	/**
-	 * @return static
-	 */
-	public function setNamespace(PhpNamespace $val = null): self
+	/** @deprecated */
+	public function setNamespace(Nette\PhpGenerator\PhpNamespace $val = null): self
 	{
-		$this->namespace = $val;
+		trigger_error(__METHOD__ . '() is deprecated', E_USER_DEPRECATED);
 		return $this;
-	}
-
-
-	protected function parametersToString(): string
-	{
-		$params = [];
-		foreach ($this->parameters as $param) {
-			$variadic = $this->variadic && $param === end($this->parameters);
-			$hint = $param->getTypeHint();
-			$params[] = ($hint ? ($param->isNullable() ? '?' : '') . ($this->namespace ? $this->namespace->unresolveName($hint) : $hint) . ' ' : '')
-				. ($param->isReference() ? '&' : '')
-				. ($variadic ? '...' : '')
-				. '$' . $param->getName()
-				. ($param->hasDefaultValue() && !$variadic ? ' = ' . Helpers::dump($param->getDefaultValue()) : '');
-		}
-		return '(' . implode(', ', $params) . ')';
-	}
-
-
-	protected function returnTypeToString(): string
-	{
-		return $this->returnType
-			? ': ' . ($this->returnNullable ? '?' : '') . ($this->namespace ? $this->namespace->unresolveName($this->returnType) : $this->returnType)
-			: '';
 	}
 }

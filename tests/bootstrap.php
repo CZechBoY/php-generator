@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 // The Nette Tester command-line runner can be
@@ -7,6 +8,19 @@ declare(strict_types=1);
 if (@!include __DIR__ . '/../vendor/autoload.php') {
 	echo 'Install Nette Tester using `composer install`';
 	exit(1);
+}
+
+
+function same(string $expected, $actual): void
+{
+	$expected = str_replace(PHP_EOL, "\n", $expected);
+	Tester\Assert::same($expected, $actual);
+}
+
+
+function sameFile(string $file, $actual): void
+{
+	same(file_get_contents($file), $actual);
 }
 
 

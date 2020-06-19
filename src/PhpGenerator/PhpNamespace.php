@@ -26,9 +26,10 @@ final class PhpNamespace
 {
 	use Nette\SmartObject;
 
-	private static $keywords = [
+	private const KEYWORDS = [
 		'string' => 1, 'int' => 1, 'float' => 1, 'bool' => 1, 'array' => 1, 'object' => 1,
-		'callable' => 1, 'iterable' => 1, 'void' => 1, 'self' => 1, 'parent' => 1,
+		'callable' => 1, 'iterable' => 1, 'void' => 1, 'self' => 1, 'parent' => 1, 'static' => 1,
+		'mixed' => 1, 'null' => 1, 'false' => 1,
 	];
 
 	/** @var string */
@@ -70,6 +71,13 @@ final class PhpNamespace
 	}
 
 
+	public function hasBracketedSyntax(): bool
+	{
+		return $this->bracketedSyntax;
+	}
+
+
+	/** @deprecated  use hasBracketedSyntax() */
 	public function getBracketedSyntax(): bool
 	{
 		return $this->bracketedSyntax;
@@ -106,13 +114,12 @@ final class PhpNamespace
 
 		$aliasOut = $alias;
 		$this->uses[$alias] = $name;
+		asort($this->uses);
 		return $this;
 	}
 
 
-	/**
-	 * @return string[]
-	 */
+	/** @return string[] */
 	public function getUses(): array
 	{
 		return $this->uses;
@@ -121,15 +128,15 @@ final class PhpNamespace
 
 	public function unresolveName(string $name): string
 	{
-		if (isset(self::$keywords[strtolower($name)]) || $name === '') {
+		if (isset(self::KEYWORDS[strtolower($name)]) || $name === '') {
 			return $name;
 		}
 		$name = ltrim($name, '\\');
 		$res = null;
 		$lower = strtolower($name);
-		foreach ($this->uses as $alias => $for) {
-			if (Strings::startsWith($lower . '\\', strtolower($for) . '\\')) {
-				$short = $alias . substr($name, strlen($for));
+		foreach ($this->uses as $alias => $original) {
+			if (Strings::startsWith($lower . '\\', strtolower($original) . '\\')) {
+				$short = $alias . substr($name, strlen($original));
 				if (!isset($res) || strlen($res) > strlen($short)) {
 					$res = $short;
 				}
@@ -144,31 +151,39 @@ final class PhpNamespace
 	}
 
 
-	public function addClass(string $name): ClassType
+	/** @return static */
+	public function add(ClassType $class): self
 	{
-		if (isset($this->classes[$name])) {
-			throw new Nette\InvalidArgumentException("Class $name was already added.");
+		$name = $class->getName();
+		if ($name === null) {
+			throw new Nette\InvalidArgumentException('Class does not have a name.');
 		}
 		$this->addUse($this->name . '\\' . $name);
-		return $this->classes[$name] = new ClassType($name, $this);
+		$this->classes[$name] = $class;
+		return $this;
+	}
+
+
+	public function addClass(string $name): ClassType
+	{
+		$this->add($class = new ClassType($name, $this));
+		return $class;
 	}
 
 
 	public function addInterface(string $name): ClassType
 	{
-		return $this->addClass($name)->setType(ClassType::TYPE_INTERFACE);
+		return $this->addClass($name)->setInterface();
 	}
 
 
 	public function addTrait(string $name): ClassType
 	{
-		return $this->addClass($name)->setType(ClassType::TYPE_TRAIT);
+		return $this->addClass($name)->setTrait();
 	}
 
 
-	/**
-	 * @return ClassType[]
-	 */
+	/** @return ClassType[] */
 	public function getClasses(): array
 	{
 		return $this->classes;
@@ -177,31 +192,14 @@ final class PhpNamespace
 
 	public function __toString(): string
 	{
-		$uses = [];
-		asort($this->uses);
-		foreach ($this->uses as $alias => $name) {
-			$useNamespace = Helpers::extractNamespace($name);
-
-			if ($this->name !== $useNamespace) {
-				if ($alias === $name || substr($name, -(strlen($alias) + 1)) === '\\' . $alias) {
-					$uses[] = "use {$name};";
-				} else {
-					$uses[] = "use {$name} as {$alias};";
-				}
+		try {
+			return (new Printer)->printNamespace($this);
+		} catch (\Throwable $e) {
+			if (PHP_VERSION_ID >= 70400) {
+				throw $e;
 			}
-		}
-
-		$body = ($uses ? implode("\n", $uses) . "\n\n" : '')
-			. implode("\n", $this->classes);
-
-		if ($this->bracketedSyntax) {
-			return 'namespace' . ($this->name ? ' ' . $this->name : '') . " {\n\n"
-				. Strings::indent($body)
-				. "\n}\n";
-
-		} else {
-			return ($this->name ? "namespace {$this->name};\n\n" : '')
-				. $body;
+			trigger_error('Exception in ' . __METHOD__ . "(): {$e->getMessage()} in {$e->getFile()}:{$e->getLine()}", E_USER_ERROR);
+			return '';
 		}
 	}
 }
